@@ -28,6 +28,7 @@ from datetime import datetime
 from socket import socket, timeout, AF_INET, SOCK_STREAM
 from socket import error as socket_error
 from struct import pack, unpack
+from six.moves import xrange
 import sys
 import ssl
 import select
@@ -215,7 +216,8 @@ class APNsConnection(object):
                 try:
                     self._ssl.do_handshake()
                     break
-                except ssl.SSLError, err:
+                except ssl.SSLError:
+                    err = sys.exc_info()[1]
                     if ssl.SSL_ERROR_WANT_READ == err.args[0]:
                         select.select([self._ssl], [], [])
                     elif ssl.SSL_ERROR_WANT_WRITE == err.args[0]:
@@ -229,7 +231,8 @@ class APNsConnection(object):
                 try:
                     self._ssl = wrap_socket(self._socket, self.key_file, self.cert_file)
                     break
-                except SSLError, ex:
+                except SSLError:
+                    ex = sys.exc_info()[1]
                     if ex.args[0] == SSL_ERROR_WANT_READ:
                         sys.exc_clear()
                     elif ex.args[0] == SSL_ERROR_WANT_WRITE:
