@@ -29,6 +29,7 @@ from socket import socket, timeout, AF_INET, SOCK_STREAM
 from socket import error as socket_error
 from struct import pack, unpack
 from six.moves import xrange
+import six
 import sys
 import ssl
 import select
@@ -435,7 +436,7 @@ class FeedbackConnection(APNsConnection):
         A generator that yields (token_hex, fail_time) pairs retrieved from
         the APNs feedback server
         """
-        buff = ''
+        buff = six.binary_type()
         for chunk in self._chunks():
             buff += chunk
 
