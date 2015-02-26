@@ -276,6 +276,13 @@ class APNsConnection(object):
         else: # blocking socket
             return self._connection().write(string)
 
+def dictionary():
+    if sys.version_info[0] == 3:
+        import collections
+        return collections.OrderedDict()
+    else:
+        return {}
+
 
 class PayloadAlert(object):
     def __init__(self, body=None, action_loc_key=None, loc_key=None,
@@ -288,7 +295,7 @@ class PayloadAlert(object):
         self.launch_image = launch_image
 
     def dict(self):
-        d = {}
+        d = dictionary()
         if self.body:
             d['body'] = self.body
         if self.action_loc_key:
@@ -320,7 +327,11 @@ class Payload(object):
 
     def dict(self):
         """Returns the payload as a regular Python dictionary"""
-        d = {}
+        d = dictionary()
+        if self.sound:
+            d['sound'] = self.sound
+        if self.badge is not None:
+            d['badge'] = int(self.badge)
         if self.alert:
             # Alert can be either a string or a PayloadAlert
             # object
@@ -328,10 +339,6 @@ class Payload(object):
                 d['alert'] = self.alert.dict()
             else:
                 d['alert'] = self.alert
-        if self.sound:
-            d['sound'] = self.sound
-        if self.badge is not None:
-            d['badge'] = int(self.badge)
         if self.category:
             d['category'] = self.category
 
@@ -367,36 +374,36 @@ class Frame(object):
     def add_item(self, token_hex, payload, identifier, expiry, priority):
         """Add a notification message to the frame"""
         item_len = 0
-        self.frame_data.extend('\2' + APNs.packed_uint_big_endian(item_len))
+        self.frame_data.extend(six.b('\2') + APNs.packed_uint_big_endian(item_len))
 
         token_bin = a2b_hex(token_hex)
         token_length_bin = APNs.packed_ushort_big_endian(len(token_bin))
-        token_item = '\1' + token_length_bin + token_bin
+        token_item = six.b('\1') + token_length_bin + token_bin
         self.frame_data.extend(token_item)
         item_len += len(token_item)
 
         payload_json = payload.json()
         payload_length_bin = APNs.packed_ushort_big_endian(len(payload_json))
-        payload_item = '\2' + payload_length_bin + payload_json
+        payload_item = six.b('\2') + payload_length_bin + payload_json
         self.frame_data.extend(payload_item)
         item_len += len(payload_item)
 
         identifier_bin = APNs.packed_uint_big_endian(identifier)
         identifier_length_bin = \
                 APNs.packed_ushort_big_endian(len(identifier_bin))
-        identifier_item = '\3' + identifier_length_bin + identifier_bin
+        identifier_item = six.b('\3') + identifier_length_bin + identifier_bin
         self.frame_data.extend(identifier_item)
         item_len += len(identifier_item)
 
         expiry_bin = APNs.packed_uint_big_endian(expiry)
         expiry_length_bin = APNs.packed_ushort_big_endian(len(expiry_bin))
-        expiry_item = '\4' + expiry_length_bin + expiry_bin
+        expiry_item = six.b('\4') + expiry_length_bin + expiry_bin
         self.frame_data.extend(expiry_item)
         item_len += len(expiry_item)
 
         priority_bin = APNs.packed_uchar(priority)
         priority_length_bin = APNs.packed_ushort_big_endian(len(priority_bin))
-        priority_item = '\5' + priority_length_bin + priority_bin
+        priority_item = six.b('\5') + priority_length_bin + priority_bin
         self.frame_data.extend(priority_item)
         item_len += len(priority_item)
 
@@ -411,6 +418,10 @@ class Frame(object):
     def __str__(self):
         """Get the frame buffer"""
         return str(self.frame_data)
+
+    def data(self):
+        """Get the frame buffer"""
+        return six.binary_type(self.frame_data)
 
 class FeedbackConnection(APNsConnection):
     """
@@ -502,9 +513,7 @@ class GatewayConnection(APNsConnection):
         payload_json = payload.json()
         payload_length_bin = APNs.packed_ushort_big_endian(len(payload_json))
 
-        zero_byte = '\0'
-        if sys.version_info[0] != 2:
-            zero_byte = bytes(zero_byte, 'utf-8')
+        zero_byte = six.b('\0')
         notification = (zero_byte + token_length_bin + token_bin
             + payload_length_bin + payload_json)
 
