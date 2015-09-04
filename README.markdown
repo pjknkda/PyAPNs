@@ -124,7 +124,7 @@ Result:
 
 ## Travis Build Status
 
-[![Build Status](https://secure.travis-ci.org/djacobs/PyAPNs.png?branch=master)](http://travis-ci.org/djacobs/PyAPNs)
+[![Build Status](https://secure.travis-ci.org/pjknkda/PyAPNs.png?branch=master)](http://travis-ci.org/pjknkda/PyAPNs)
 
 ## Further Info
 
